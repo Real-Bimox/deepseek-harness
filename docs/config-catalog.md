@@ -473,6 +473,33 @@ export interface Config {
 
 Source: [`packages/code-runtime/code-runtime-worker-thread/src/index.ts:25`](../packages/code-runtime/code-runtime-worker-thread/src/index.ts)
 
+<a id="deepseek-aidsh-comfy"></a>
+
+## `@deepseek-ai/dsh-comfy`
+
+```ts config-catalog
+/**
+ * Config for the ComfyUI runtime. `baseUrl` is the Comfy API v2 endpoint (the proxy in
+ * front of a self-hosted ComfyUI); `serverUrl` is the ComfyUI server itself, used only
+ * for the model and node discovery endpoints that the v2 API does not cover. `token`
+ * omission reads `COMFY_API_TOKEN`.
+ */
+export interface Config {
+  /** Comfy API v2 base URL. Defaults to the local proxy at `http://127.0.0.1:8189`. */
+  baseUrl?: string
+  /** ComfyUI server base URL for discovery. Defaults to `http://127.0.0.1:8188`. */
+  serverUrl?: string
+  /** Bearer token for `baseUrl`; omitted when the endpoint accepts unauthenticated requests. */
+  token?: string
+  /** Per-request deadline in milliseconds. Defaults to 30000. */
+  requestTimeoutMs?: number
+  /** Poll interval for {@link ComfyRuntime.waitForJob} in milliseconds. Defaults to 1000. */
+  pollIntervalMs?: number
+}
+```
+
+Source: [`packages/comfy/comfy/src/index.ts:63`](../packages/comfy/comfy/src/index.ts)
+
 <a id="deepseek-aidsh-compaction-basic"></a>
 
 ## `@deepseek-ai/dsh-compaction-basic`
@@ -2542,6 +2569,38 @@ export interface Config {
 ```
 
 Source: [`packages/shell/tool-bash-persistent/src/index.ts:432`](../packages/shell/tool-bash-persistent/src/index.ts)
+
+<a id="deepseek-aidsh-tool-comfy"></a>
+
+## `@deepseek-ai/dsh-tool-comfy`
+
+Requires: `tools` · `comfy` · `systemPrompt`
+
+```ts config-catalog
+/** Plugin config: per-tool cooperative budgets and result caps. */
+export interface Config {
+  /** Cooperative timeout budget (ms) for `comfy_submit_workflow`. Defaults to 30000. */
+  submitTimeoutMs?: number
+  /** Cooperative timeout budget (ms) for `comfy_get_job`, including a blocking wait. Defaults to 600000. */
+  getTimeoutMs?: number
+  /** Cooperative timeout budget (ms) for `comfy_cancel_job`. Defaults to 30000. */
+  cancelTimeoutMs?: number
+  /** Cooperative timeout budget (ms) for `comfy_list_models`. Defaults to 30000. */
+  listTimeoutMs?: number
+  /** Cooperative timeout budget (ms) for `comfy_get_node`. Defaults to 30000. */
+  nodeTimeoutMs?: number
+  /** Cooperative timeout budget (ms) for `comfy_upload_asset`. Defaults to 120000. */
+  uploadTimeoutMs?: number
+  /** Cap on model names carried by one `comfy_list_models` result. Defaults to 200. */
+  listMaxEntries?: number
+  /** Cap on rendered `comfy_get_node` output characters. Defaults to 20000. */
+  nodeMaxOutputChars?: number
+  /** Cap on one `comfy_upload_asset` file size in bytes. Defaults to 104857600. */
+  uploadMaxBytes?: number
+}
+```
+
+Source: [`packages/comfy/tool-comfy/src/index.ts:49`](../packages/comfy/tool-comfy/src/index.ts)
 
 <a id="deepseek-aidsh-tool-fs"></a>
 

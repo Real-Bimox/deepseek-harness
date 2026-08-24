@@ -562,6 +562,63 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'comfy',
+    summary: 'The ComfyUI capability service, registered as `ctx.comfy`.',
+    description: 'The ComfyUI capability service, registered as `ctx.comfy`. One HTTP client for the configured endpoints; every method accepts an optional cancellation signal, applies the configured request deadline, and throws ComfyError on failure.',
+    methods: [
+      {
+        signature: 'async submitWorkflow(workflow: ComfyWorkflowGraph, signal?: AbortSignal): Promise<ComfyJob>',
+        description: 'Submit an API-format workflow graph for execution. Sends a fresh `Idempotency-Key` per call, so retries submit new jobs and only network-level retries deduplicate.',
+        parameters: [{ name: 'workflow', description: 'the API-format graph, verbatim; UI-format exports are rejected server-side with `workflow_format_ui`.' }, { name: 'signal', description: 'optional cancellation signal; aborting stops the submit, never a durably recorded job.' }],
+        returns: 'the created job (initially `queued`).',
+      },
+      {
+        signature: 'async getJob(id: string, signal?: AbortSignal): Promise<ComfyJob>',
+        description: 'Fetch the authoritative state of one job: status, latest progress snapshot, and every output committed so far.',
+        parameters: [{ name: 'id', description: 'the job id from {@link submitWorkflow}.' }, { name: 'signal', description: 'optional cancellation signal.' }],
+        returns: 'the full job object.',
+      },
+      {
+        signature: 'async cancelJob(id: string, signal?: AbortSignal): Promise<ComfyJob>',
+        description: 'Request cancellation of one job. Idempotent: canceling a terminal job returns its terminal state; a running job moves through `canceling`.',
+        parameters: [{ name: 'id', description: 'the job id.' }, { name: 'signal', description: 'optional cancellation signal.' }],
+        returns: 'the job object current at the cancel request.',
+      },
+      {
+        signature: 'async waitForJob(id: string, options: { timeoutMs: number }, signal?: AbortSignal): Promise<ComfyJob>',
+        description: 'Poll one job until it reaches a terminal state (`succeeded`, `canceled`, `failed`, `expired`) or the wait budget ends. The job itself keeps running server-side when the wait aborts or times out; cancelJob stops it.',
+        parameters: [{ name: 'id', description: 'the job id.' }, { name: 'options', description: '`timeoutMs` bounds the complete wait.' }, { name: 'signal', description: 'optional cancellation signal fused into the wait.' }],
+        returns: 'the terminal job object.',
+        throws: ['{@link ComfyError} `COMFY_TIMEOUT` when the job is not terminal within `timeoutMs`, or `COMFY_ABORTED` when `signal` fires.'],
+      },
+      {
+        signature: 'async listModelFolders(signal?: AbortSignal): Promise<readonly string[]>',
+        description: 'List the model folder names the ComfyUI server serves (for example `checkpoints`, `diffusion_models`, `loras`).',
+        parameters: [{ name: 'signal', description: 'optional cancellation signal.' }],
+        returns: 'the folder names.',
+      },
+      {
+        signature: 'async listModelFiles(folder: string, signal?: AbortSignal): Promise<readonly string[]>',
+        description: 'List the model files in one folder of the ComfyUI server\'s model library.',
+        parameters: [{ name: 'folder', description: 'the folder name from {@link listModelFolders}.' }, { name: 'signal', description: 'optional cancellation signal.' }],
+        returns: 'the file names in that folder.',
+      },
+      {
+        signature: 'async getNodeInfo(classType: string, signal?: AbortSignal): Promise<Record<string, unknown>>',
+        description: 'Fetch one node class\'s input schema from the ComfyUI server: required and optional inputs with their types, defaults, and enumerated values. The schema is what a workflow author needs to connect the node; the full catalog is deliberately not offered through this method.',
+        parameters: [{ name: 'classType', description: 'the node class name (for example `KSampler`).' }, { name: 'signal', description: 'optional cancellation signal.' }],
+        returns: 'the node class\'s input schema as opaque JSON.',
+        throws: ['{@link ComfyError} `COMFY_NOT_FOUND` when the server does not know the class.'],
+      },
+      {
+        signature: 'async uploadAsset(upload: ComfyAssetUpload, signal?: AbortSignal): Promise<ComfyAsset>',
+        description: 'Upload one asset through the v2 asset endpoint and mint its record. Assets are the only way to feed external bytes (for example an input image) into a workflow: reference the returned id in the graph as `{"__type": "core/ASSET", "info": {"id": "<asset id>"}}`.',
+        parameters: [{ name: 'upload', description: 'the bytes, their placement path, and the media type.' }, { name: 'signal', description: 'optional cancellation signal.' }],
+        returns: 'the minted asset; `hash` may be absent while computed lazily.',
+      },
+    ],
+  },
+  {
     key: 'commands',
     summary: 'Human-command registry.',
     description: 'Human-command registry. Plain-context definitions are global; definitions registered through a command-injected child of an agent context shadow globals for that agent.',
@@ -3060,6 +3117,42 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'CollectedOutput',
     declaration: 'export interface CollectedOutput {\n    text: string;\n    truncated: boolean;\n    spillPath?: string;\n}',
+  },
+  {
+    name: 'ComfyAsset',
+    declaration: 'export interface ComfyAsset {\n    readonly id: string;\n    readonly hash?: string | undefined;\n    readonly sizeBytes: number;\n    readonly contentType: string;\n    readonly filePath?: string | undefined;\n    readonly createdAt: string;\n    readonly url: string;\n    readonly urlExpiresAt: string;\n}',
+  },
+  {
+    name: 'ComfyAssetUpload',
+    declaration: 'export interface ComfyAssetUpload {\n    readonly bytes: Uint8Array;\n    readonly filePath: string;\n    readonly contentType: string;\n}',
+  },
+  {
+    name: 'ComfyJob',
+    declaration: 'export interface ComfyJob {\n    readonly id: string;\n    readonly status: ComfyJobStatus;\n    readonly createdAt: string;\n    readonly startedAt?: string | undefined;\n    readonly completedAt?: string | undefined;\n    readonly expiresAt: string;\n    readonly queuePosition?: number | undefined;\n    readonly progress?: ComfyJobProgress | undefined;\n    readonly outputs: readonly ComfyJobOutput[];\n    readonly error?: ComfyJobError | undefined;\n}',
+  },
+  {
+    name: 'ComfyJobError',
+    declaration: 'export interface ComfyJobError {\n    readonly code: string;\n    readonly message: string;\n    readonly nodeId?: string | undefined;\n    readonly classType?: string | undefined;\n    readonly traceback?: string | undefined;\n}',
+  },
+  {
+    name: 'ComfyJobOutput',
+    declaration: 'export interface ComfyJobOutput {\n    readonly nodeId: string;\n    readonly name: string;\n    readonly type: ComfyOutputType;\n    readonly contentType: string;\n    readonly sizeBytes: number;\n    readonly assetId: string;\n    readonly url: string;\n    readonly urlExpiresAt: string;\n}',
+  },
+  {
+    name: 'ComfyJobProgress',
+    declaration: 'export interface ComfyJobProgress {\n    readonly value: number;\n    readonly nodesDone: number;\n    readonly nodesTotal: number;\n    readonly currentNode?: string | undefined;\n    readonly currentNodeClass?: string | undefined;\n    readonly step?: number | undefined;\n    readonly steps?: number | undefined;\n    readonly message?: string | undefined;\n}',
+  },
+  {
+    name: 'ComfyJobStatus',
+    declaration: 'export type ComfyJobStatus = \'queued\' | \'running\' | \'succeeded\' | \'canceling\' | \'canceled\' | \'failed\' | \'expired\';',
+  },
+  {
+    name: 'ComfyOutputType',
+    declaration: 'export type ComfyOutputType = \'image\' | \'video\' | \'audio\' | \'text\' | \'file\' | \'latent\';',
+  },
+  {
+    name: 'ComfyWorkflowGraph',
+    declaration: 'export type ComfyWorkflowGraph = Readonly<Record<string, {\n    readonly class_type: string;\n    readonly inputs: Readonly<Record<string, unknown>>;\n}>>;',
   },
   {
     name: 'CommandDefinition',

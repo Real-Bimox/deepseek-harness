@@ -505,6 +505,15 @@ const SERVICE_ROLES: ServiceRole[] = [
     note: 'Producers (background bash, PTY sends, and subagent delegations) register running work; tool-jobs is the model-facing controller that reads, lists, and kills it; jobs-local is the process-local registry.',
   },
   {
+    key: 'comfy',
+    pkg: 'comfy',
+    title: 'ComfyUI API-v2 client',
+    mode: 'seam',
+    implementations: ['comfy'],
+    consumers: ['tool-comfy'],
+    note: 'One HTTP client owns the Comfy API v2 job and asset operations plus ComfyUI server discovery; tool-comfy renders the capability to the model.',
+  },
+  {
     key: 'web',
     pkg: 'web',
     title: 'Web access provider registry',

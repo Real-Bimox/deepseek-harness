@@ -40,6 +40,7 @@ This table connects model-visible tool names to the plugin package and service s
 | `@deepseek-ai/dsh-experimental-tool-agent-team` | `followup_task`, `interrupt_agent`, `list_agents`, `send_message`, `spawn_teammate`, `team_task_create`, `team_task_get`, `team_task_list`, `team_task_update`, `wait_agent` | `ctx.tools`, `ctx.systemPrompt`, `ctx.agentTeams`, `an exact live Team member Agent` | `tool/call`, `team/member`, `team/message/queued`, `team/message/delivered`, `team/task`, `tool/result` | - | All ten tools are scoped to implicit Team Leads and durable teammates. The shipped dsh-base bundle keeps the package disabled; the documented Agent Teams profile patch enables it while disabling the legacy continuable-child control names. |
 | `@deepseek-ai/dsh-tool-todo` | `todo_write` | `ctx.tools`, `owning Agent session` | `tool/call`, `todo/write`, `tool/result` | - | todo_write is session-owned state; UIs render the latest todo/write event as a checklist. `allowParallelInProgress` is required with no default, so the catalog states its choice: `true`, whose description invites several `in_progress` items. A deployment choosing `false` receives the same tool with a description asking for exactly one active task. |
 | `@deepseek-ai/dsh-tool-workflow` | `workflow` | `ctx.tools`, `ctx.workflowEngine`, `ctx.systemPrompt`, `a calling Agent (exec.agent parents the script children)` | `tool/call`, `tool/result` | - | - |
+| `@deepseek-ai/dsh-tool-comfy` | `comfy_cancel_job`, `comfy_get_job`, `comfy_get_node`, `comfy_list_models`, `comfy_submit_workflow`, `comfy_upload_asset` | `ctx.tools`, `ctx.comfy`, `ctx.systemPrompt` | `tool/call`, `tool/result` | - | - |
 | `@deepseek-ai/dsh-tool-web` | `web_fetch`, `web_search` | `ctx.tools`, `ctx.web`, `ctx.systemPrompt` | `tool/call`, `tool/result` | - | web_search and web_fetch keep provider selection behind ctx.web so model-visible schemas stay stable across backend swaps. |
 
 <a id="deepseek-aidsh-tool-ask-user"></a>
@@ -2168,6 +2169,138 @@ Constraints: concurrency and total-agent caps apply; no filesystem, network, tim
 ```
 
 Source: [`packages/workflow/tool-workflow/src/index.ts`](../packages/workflow/tool-workflow/src/index.ts)
+
+<a id="deepseek-aidsh-tool-comfy"></a>
+
+## `@deepseek-ai/dsh-tool-comfy`
+
+### `comfy_cancel_job`
+
+Request cancellation of a ComfyUI job. Idempotent; returns the job's current state.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "jobId": {
+      "type": "string",
+      "description": "The job id to cancel."
+    }
+  },
+  "required": [
+    "jobId"
+  ]
+}
+```
+
+Source: [`packages/comfy/tool-comfy/src/index.ts`](../packages/comfy/tool-comfy/src/index.ts)
+
+### `comfy_get_job`
+
+Fetch a ComfyUI job's status, progress, outputs, and error; optionally block until the job reaches a terminal state.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "jobId": {
+      "type": "string",
+      "description": "The job id returned by comfy_submit_workflow."
+    },
+    "wait": {
+      "type": "boolean",
+      "description": "Block until the job is terminal (succeeded/canceled/failed/expired). Defaults to an immediate status snapshot."
+    }
+  },
+  "required": [
+    "jobId"
+  ]
+}
+```
+
+Source: [`packages/comfy/tool-comfy/src/index.ts`](../packages/comfy/tool-comfy/src/index.ts)
+
+### `comfy_get_node`
+
+Fetch one ComfyUI node class's input schema: input names, types, defaults, and allowed values.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "classType": {
+      "type": "string",
+      "description": "The node class name, for example KSampler or CLIPTextEncode."
+    }
+  },
+  "required": [
+    "classType"
+  ]
+}
+```
+
+Source: [`packages/comfy/tool-comfy/src/index.ts`](../packages/comfy/tool-comfy/src/index.ts)
+
+### `comfy_list_models`
+
+List ComfyUI model folders (when folder is omitted) or the model files inside one folder.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "folder": {
+      "type": "string",
+      "description": "A folder name from the folder listing, for example checkpoints, diffusion_models, loras, vae, or text_encoders."
+    }
+  }
+}
+```
+
+Source: [`packages/comfy/tool-comfy/src/index.ts`](../packages/comfy/tool-comfy/src/index.ts)
+
+### `comfy_submit_workflow`
+
+Submit an API-format ComfyUI workflow graph for execution and return the queued job id.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "workflow": {
+      "type": "object",
+      "description": "API-format workflow graph: a map of node id to {\"class_type\": string, \"inputs\": object}. UI-format exports (with \"nodes\"/\"links\") are rejected.",
+      "additionalProperties": true
+    }
+  },
+  "required": [
+    "workflow"
+  ]
+}
+```
+
+Source: [`packages/comfy/tool-comfy/src/index.ts`](../packages/comfy/tool-comfy/src/index.ts)
+
+### `comfy_upload_asset`
+
+Upload a local file to the ComfyUI server as a workflow input asset and return its asset id.
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "path": {
+      "type": "string",
+      "description": "Absolute path of the file to upload (for example an input image)."
+    }
+  },
+  "required": [
+    "path"
+  ]
+}
+```
+
+Source: [`packages/comfy/tool-comfy/src/index.ts`](../packages/comfy/tool-comfy/src/index.ts)
 
 <a id="deepseek-aidsh-tool-web"></a>
 

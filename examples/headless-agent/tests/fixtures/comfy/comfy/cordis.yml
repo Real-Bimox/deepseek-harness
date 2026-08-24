@@ -1,0 +1,39 @@
+- id: comfy-mock-llm
+  name: './comfy-mock-llm.ts'
+
+- id: base
+  name: '@deepseek-ai/cordis-plugin-include'
+  config:
+    path: ../../../../cordis.yml
+    patches:
+      - id: llm-deepseek
+        name: '@deepseek-ai/dsh-llm-deepseek'
+        disabled: true
+      - id: agent-spine
+        name: '@deepseek-ai/dsh-agent-spine-demo'
+        config:
+          agents:
+            - id: main
+              provider: comfy-mock
+              model: comfy-mock
+              cwd: !!js process.cwd()
+          workspaceContext: false
+          dshHome: './.dsh-home'
+          skills:
+            filesystem:
+              agentsHome: './.agents-home'
+          persona: 'Keyless ComfyUI composition smoke.'
+      - id: persistence
+        name: '@deepseek-ai/dsh-session-persistence-jsonl'
+        config:
+          root: './.sessions'
+      - insert:
+          - id: comfy
+            name: '@deepseek-ai/dsh-comfy'
+            config:
+              baseUrl: !!js process.env.COMFY_STUB_URL ?? 'http://127.0.0.1:8189'
+              serverUrl: !!js process.env.COMFY_STUB_URL ?? 'http://127.0.0.1:8189'
+              requestTimeoutMs: 5000
+              pollIntervalMs: 10
+          - id: tool-comfy
+            name: '@deepseek-ai/dsh-tool-comfy'

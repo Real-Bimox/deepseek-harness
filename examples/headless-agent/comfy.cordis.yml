@@ -1,0 +1,18 @@
+# ComfyUI overlay: keep the advanced headless agent and add the ComfyUI capability
+# (ctx.comfy over the Comfy API v2 proxy) with its model-facing tools, so one
+# session can generate images, video, and audio on the LAN ComfyUI stack.
+# baseUrl points at the comfy-api-proxy sidecar (default port 8189); serverUrl at
+# the ComfyUI server itself for model and node discovery.
+- id: base
+  name: '@deepseek-ai/cordis-plugin-include'
+  config:
+    path: ./advanced.cordis.yml
+    patches:
+      - insert:
+          - id: comfy
+            name: '@deepseek-ai/dsh-comfy'
+            config:
+              baseUrl: http://192.168.192.80:8189
+              serverUrl: http://192.168.192.80:8188
+          - id: tool-comfy
+            name: '@deepseek-ai/dsh-tool-comfy'

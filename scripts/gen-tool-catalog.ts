@@ -63,6 +63,8 @@ import * as ToolTeam from '@deepseek-ai/dsh-experimental-tool-agent-team'
 import * as ToolTodo from '@deepseek-ai/dsh-tool-todo'
 import * as ToolSubagent from '@deepseek-ai/dsh-tool-subagent'
 import * as ToolWeb from '@deepseek-ai/dsh-tool-web'
+import ComfyRuntime from '@deepseek-ai/dsh-comfy'
+import * as ToolComfy from '@deepseek-ai/dsh-tool-comfy'
 import VmWorkflowEngine from '@deepseek-ai/dsh-workflow-worker-thread'
 import * as ToolRalph from '@deepseek-ai/dsh-tool-ralph'
 import * as ToolWorkflow from '@deepseek-ai/dsh-tool-workflow'
@@ -587,6 +589,17 @@ const TOOL_PACKAGES: ToolPackage[] = [
       registerCatalogSubagentProvider(ctx, 'mock')
       await ctx.plugin(VmWorkflowEngine, { provider: 'mock' })
       await ctx.plugin(ToolWorkflow)
+    },
+  },
+  {
+    pkg: '@deepseek-ai/dsh-tool-comfy',
+    dir: 'tool-comfy',
+    source: 'packages/comfy/tool-comfy/src/index.ts',
+    requires: ['ctx.tools', 'ctx.comfy', 'ctx.systemPrompt'],
+    writes: ['tool/call', 'tool/result'],
+    async mount(ctx) {
+      await ctx.plugin(ComfyRuntime)
+      await ctx.plugin(ToolComfy)
     },
   },
   {

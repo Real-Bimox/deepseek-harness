@@ -17,6 +17,10 @@ pnpm dsh --profile headless "fix the failing test in this workspace"
 
 快照套件通过 [`tests/fixtures/headless-driver.ts`](tests/fixtures/headless-driver.ts) 运行本目录的配置。这个未导出且仅供测试使用的进程会在结果记录之前，以 JSONL 发出规范会话事件。该事件流属于测试基础设施，不是受支持的 CLI（命令行界面）输出格式。子会话只通过父会话的工具事件和结果对外显示。
 
+## ComfyUI overlay（叠加配置）
+
+[`comfy.cordis.yml`](comfy.cordis.yml) 在 advanced 组合之上加入 ComfyUI 能力（`ctx.comfy`）及其面向模型的工具，`baseUrl` 指向局域网 comfy-api-proxy（8189 端口），`serverUrl` 指向 ComfyUI 服务器（8188 端口）。两个端点在该局域网内均为匿名访问，无需凭据；模型用 `comfy_*` 工具发现模型与节点模式、提交工作流并轮询作业至完成。输出既落在服务器输出目录，也以资产 URL 出现在作业结果中。
+
 ## E2B POC overlay
 
 [`e2b.cordis.yml`](e2b.cordis.yml) 使用一个共享 E2B 沙箱替换本地文件系统与子进程提供方，同时保留 `dsh-bash-local` 和相同的面向模型工具。请在 git 忽略的根目录 `.env` 中，将 `E2B_API_KEY` 与 `DEEPSEEK_API_KEY` 放在一起，然后运行凭据门控的实机组合测试；它在同一个沙箱中驱动 FS、Bash、PTY 和 LSP，并证明沙箱最终被删除：

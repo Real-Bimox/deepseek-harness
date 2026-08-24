@@ -17,6 +17,10 @@ The product command is [`dsh --profile headless`](../../apps/cli/README.md): it 
 
 Snapshot suites run this directory's configuration through [`tests/fixtures/headless-driver.ts`](tests/fixtures/headless-driver.ts), an unexported test-only process that emits canonical session events as JSONL before its result record. That stream is test infrastructure, not a supported CLI output format. Child sessions surface only through parent tool events and results.
 
+## ComfyUI overlay
+
+[`comfy.cordis.yml`](comfy.cordis.yml) adds the ComfyUI capability (`ctx.comfy`) and its model-facing tools to the advanced composition, pointing `baseUrl` at the LAN comfy-api-proxy (port 8189) and `serverUrl` at the ComfyUI server (port 8188). Both endpoints are unauthenticated on this LAN, so no credentials are needed; the model discovers models and node schemas with the `comfy_*` tools, submits workflows, and polls jobs to completion. Outputs land in the server's output directory and as asset URLs in job results.
+
 ## E2B POC overlay
 
 [`e2b.cordis.yml`](e2b.cordis.yml) replaces the local filesystem and subprocess providers with one shared E2B sandbox while retaining `dsh-bash-local` and the same model-facing tools. Put `E2B_API_KEY` beside `DEEPSEEK_API_KEY` in the gitignored root `.env`, then run the credential-gated live composition, which drives FS, Bash, PTY, and LSP in one sandbox and proves final deletion:
