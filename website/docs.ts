@@ -138,6 +138,14 @@ const homeAndGuide = pairedPages([
     section: { root: 'SDK', en: 'SDK' },
     order: 1,
   },
+  {
+    source: 'docs/user/guide/comfyui.md',
+    route: 'guide/comfyui.md',
+    label: { root: '用 ComfyUI 生成', en: 'Generate with ComfyUI' },
+    sidebar: { root: 'zh-guide', en: 'en-guide' },
+    section: { root: 'SDK', en: 'SDK' },
+    order: 2,
+  },
 ])
 
 const develop = pairedPages([
